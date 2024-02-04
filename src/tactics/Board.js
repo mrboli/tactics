@@ -886,6 +886,10 @@ export default class Board {
         || (this.targeted.size === 1 && [...this.targeted][0])
         || this.viewed || this.selected;
 
+    // If on hover aAll self show attack to other unit, make sure to set target to other unit
+    // if (this.selected?.aAll && this.focused === this.selected) {
+    //   unit = [...this.targeted][0];
+    // }
     if (unit) {
       els.notice.x = 174;
       els.notice.y = 23;
@@ -1623,7 +1627,7 @@ export default class Board {
 
   showTargets(target) {
     let selected = this.selected;
-    let targeted = this.targeted = new Set(selected.getTargetUnits(target));
+    let targeted = this.targeted = new Set(selected.getTargetUnitsWithoutSelf(target));
 
     // Units affected by the attack will pulsate.
     targeted.forEach(tu => {
@@ -1884,6 +1888,11 @@ export default class Board {
         selected.setTargetNotice(unit);
     }
     else if (tile.action === 'target') {
+      // Re-calculate aAll damage for targets
+      // if (unit?.aAll && unit === this.selected) {
+      //   const target = selected.getTargetUnitsWithoutSelf(selected)[0];
+      //   selected.setTargetNotice(target);
+      // } else if (unit)
       if (unit)
         selected.setTargetNotice(unit);
     }
@@ -1923,6 +1932,7 @@ export default class Board {
 
     let unit = tile.assigned;
     let game = Tactics.game;
+    const selected = this.selected;
 
     // Single-click attacks are only enabled for mouse pointers.
     if (tile.action === 'attack') {
@@ -1932,7 +1942,12 @@ export default class Board {
     else if (tile.action === 'target') {
       if (game.pointerType === 'mouse')
         this._clearTargetMix(tile);
-      if (unit)
+      if (selected?.aAll) {
+        // Don't unset notice for aAll targets, or it will display defaults
+        const target = selected.getTargetUnitsWithoutSelf(selected)[0];
+        selected.setTargetNotice(target);
+      } else if (unit)
+      // if (unit)
         unit.change({ notice:null });
     }
 
